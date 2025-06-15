@@ -6,7 +6,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { sendResetPasswordEmail } = require("../utils/emailService");
 
-exports.signup = async (req, res) => {
+exports.signup = async (req, res, next) => {
   try {
     const { nom, prenom, email, password, roles } = req.body;
 
@@ -31,7 +31,7 @@ exports.signup = async (req, res) => {
   }
 };
 
-exports.signin = async (req, res) => {
+exports.signin = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
@@ -68,7 +68,7 @@ exports.signin = async (req, res) => {
   }
 };
 
-exports.logout = async (req, res) => {
+exports.logout = async (req, res, next) => {
   try {
     const userId = req.userId;
     await Log.create({ userId, action: "Déconnexion", dateAction: new Date() });
@@ -79,7 +79,7 @@ exports.logout = async (req, res) => {
   }
 };
 
-exports.forgotPassword = async (req, res) => {
+exports.forgotPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
     const user = await db.user.findOne({ where: { email } });
@@ -101,30 +101,34 @@ exports.forgotPassword = async (req, res) => {
       .status(200)
       .json({ message: "E-mail envoyé avec le lien de réinitialisation." });
   } catch (err) {
-    res.status(500).json({ message: "Erreur serveur." });
+    next(err);
   }
 };
 
-exports.resetPassword = async (req, res) => {
-  const { token, newPassword } = req.body;
+exports.resetPassword = async (req, res, next) => {
+  try {
+    const { token, newPassword } = req.body;
 
-  const hash = crypto.createHash("sha256").update(token).digest("hex");
+    const hash = crypto.createHash("sha256").update(token).digest("hex");
 
-  const user = await db.user.findOne({
-    where: {
-      resetToken: hash,
-      resetTokenExpires: { [Op.gt]: Date.now() },
-    },
-  });
+    const user = await db.user.findOne({
+      where: {
+        resetToken: hash,
+        resetTokenExpires: { [Op.gt]: Date.now() },
+      },
+    });
 
-  if (!user) {
-    return res.status(400).json({ message: "Token invalide ou expiré." });
+    if (!user) {
+      return res.status(400).json({ message: "Token invalide ou expiré." });
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    user.resetToken = null;
+    user.resetTokenExpires = null;
+    await user.save();
+
+    res.status(200).json({ message: "Mot de passe réinitialisé avec succès." });
+  } catch (err) {
+    next(err);
   }
-
-  user.password = await bcrypt.hash(newPassword, 10);
-  user.resetToken = null;
-  user.resetTokenExpires = null;
-  await user.save();
-
-  res.status(200).json({ message: "Mot de passe réinitialisé avec succès." });
 };

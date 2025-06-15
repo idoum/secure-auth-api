@@ -4,7 +4,7 @@ const User = db.user;
 const Role = db.role;
 const bcrypt = require("bcryptjs");
 
-exports.getProfile = async (req, res) => {
+exports.getProfile = async (req, res, next) => {
   try {
     const user = await User.findByPk(req.userId, {
       attributes: { exclude: ["password"] },
@@ -21,7 +21,7 @@ exports.getProfile = async (req, res) => {
   }
 };
 
-exports.updatePassword = async (req, res) => {
+exports.updatePassword = async (req, res, next) => {
   try {
     const { oldPassword, newPassword } = req.body;
 
@@ -46,7 +46,7 @@ exports.updatePassword = async (req, res) => {
   }
 };
 // Lire tous les utilisateurs avec leurs rôles
-exports.getAllUsers = async (req, res) => {
+exports.getAllUsers = async (req, res, next) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
   const search = req.query.search || "";
@@ -85,7 +85,7 @@ exports.getAllUsers = async (req, res) => {
 };
 
 // Ajouter un rôle à un utilisateur
-exports.addRoleToUser = async (req, res) => {
+exports.addRoleToUser = async (req, res, next) => {
   const { userId, roleId } = req.body;
   try {
     const user = await User.findByPk(userId);
@@ -105,7 +105,7 @@ exports.addRoleToUser = async (req, res) => {
 };
 
 // Supprimer un rôle d'un utilisateur
-exports.removeRoleFromUser = async (req, res) => {
+exports.removeRoleFromUser = async (req, res, next) => {
   const { userId, roleId } = req.body;
   try {
     const user = await User.findByPk(userId);
@@ -125,7 +125,7 @@ exports.removeRoleFromUser = async (req, res) => {
 };
 
 // Supprimer un utilisateur
-exports.deleteUser = async (req, res) => {
+exports.deleteUser = async (req, res, next) => {
   const userId = req.params.id;
   try {
     const result = await User.destroy({ where: { id: userId } });
