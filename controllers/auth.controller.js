@@ -3,6 +3,8 @@ const User = db.user;
 const Role = db.role;
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
+const { sendResetPasswordEmail } = require("../utils/emailService");
 
 exports.signup = async (req, res) => {
   try {
@@ -77,59 +79,52 @@ exports.logout = async (req, res) => {
   }
 };
 
-exports.forgotPassword = async (req, res, next) => {
+exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
-    const user = await User.findOne({ where: { email } });
+    const user = await db.user.findOne({ where: { email } });
 
     if (!user)
-      return res.status(404).json({ message: "Utilisateur introuvable" });
+      return res.status(404).json({ message: "Utilisateur non trouvé." });
 
     const token = crypto.randomBytes(32).toString("hex");
-    const expiration = new Date(Date.now() + 3600000); // 1 heure
+    const hash = crypto.createHash("sha256").update(token).digest("hex");
 
-    await user.update({
-      resetPasswordToken: token,
-      resetPasswordExpires: expiration,
-    });
+    // Stocker dans une table dédiée ou champs dans user
+    user.resetToken = hash;
+    user.resetTokenExpires = Date.now() + 15 * 60 * 1000; // 15 minutes
+    await user.save();
 
-    // Simulation de l'envoi par e-mail
-    console.log(
-      `🔗 Lien de réinitialisation : http://localhost:3005/reset-password/${token}`
-    );
+    await sendResetPasswordEmail(user.email, token);
 
     res
       .status(200)
-      .json({ message: "Email de réinitialisation envoyé (simulé)." });
+      .json({ message: "E-mail envoyé avec le lien de réinitialisation." });
   } catch (err) {
-    next(err);
+    res.status(500).json({ message: "Erreur serveur." });
   }
 };
 
-exports.resetPassword = async (req, res, next) => {
-  try {
-    const { token, newPassword } = req.body;
+exports.resetPassword = async (req, res) => {
+  const { token, newPassword } = req.body;
 
-    const user = await User.findOne({
-      where: {
-        resetPasswordToken: token,
-        resetPasswordExpires: { [db.Sequelize.Op.gt]: new Date() },
-      },
-    });
+  const hash = crypto.createHash("sha256").update(token).digest("hex");
 
-    if (!user)
-      return res.status(400).json({ message: "Token invalide ou expiré" });
+  const user = await db.user.findOne({
+    where: {
+      resetToken: hash,
+      resetTokenExpires: { [Op.gt]: Date.now() },
+    },
+  });
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    await user.update({
-      motDePasse: hashedPassword,
-      resetPasswordToken: null,
-      resetPasswordExpires: null,
-    });
-
-    res.status(200).json({ message: "Mot de passe réinitialisé avec succès." });
-  } catch (err) {
-    next(err);
+  if (!user) {
+    return res.status(400).json({ message: "Token invalide ou expiré." });
   }
+
+  user.password = await bcrypt.hash(newPassword, 10);
+  user.resetToken = null;
+  user.resetTokenExpires = null;
+  await user.save();
+
+  res.status(200).json({ message: "Mot de passe réinitialisé avec succès." });
 };
