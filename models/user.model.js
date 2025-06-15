@@ -3,32 +3,40 @@ module.exports = (sequelize, DataTypes) => {
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
-      primaryKey: true
+      primaryKey: true,
     },
     nom: {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: false,
     },
     prenom: {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: false,
     },
     email: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,
       validate: {
-        isEmail: true
-      }
+        isEmail: true,
+      },
     },
     password: {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: false,
     },
     is_active: {
       type: DataTypes.BOOLEAN,
-      defaultValue: true
-    }
+      defaultValue: true,
+    },
+    resetPasswordToken: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    resetPasswordExpires: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   });
 
   // Associations
@@ -37,19 +45,19 @@ module.exports = (sequelize, DataTypes) => {
     User.belongsToMany(models.role, {
       through: "user_roles",
       as: "roles",
-      foreignKey: "userId"
+      foreignKey: "userId",
     });
 
     // 1:N avec logs
     User.hasMany(models.log, {
       as: "logs",
-      foreignKey: "userId"
+      foreignKey: "userId",
     });
 
     // 1:N avec tokens de réinitialisation
     User.hasMany(models.password_reset_token, {
       as: "resetTokens",
-      foreignKey: "userId"
+      foreignKey: "userId",
     });
   };
 

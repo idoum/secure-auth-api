@@ -25,7 +25,7 @@ exports.signup = async (req, res) => {
 
     res.status(201).send({ message: "Utilisateur inscrit avec succès." });
   } catch (err) {
-    res.status(500).send({ message: err.message });
+    next(err); // passe l'erreur au middleware
   }
 };
 
@@ -51,7 +51,7 @@ exports.signin = async (req, res) => {
       expiresIn: 86400, // 24h
     });
 
-    const authorities = user.roles.map(role => role.nom);
+    const authorities = user.roles.map((role) => role.nom);
 
     res.status(200).send({
       id: user.id,
@@ -62,7 +62,7 @@ exports.signin = async (req, res) => {
       accessToken: token,
     });
   } catch (err) {
-    res.status(500).send({ message: err.message });
+    next(err); // passe l'erreur au middleware
   }
 };
 
@@ -73,7 +73,63 @@ exports.logout = async (req, res) => {
 
     res.status(200).send({ message: "Déconnecté avec succès" });
   } catch (err) {
-    res.status(500).send({ message: err.message });
+    next(err); // passe l'erreur au middleware
   }
 };
 
+exports.forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ where: { email } });
+
+    if (!user)
+      return res.status(404).json({ message: "Utilisateur introuvable" });
+
+    const token = crypto.randomBytes(32).toString("hex");
+    const expiration = new Date(Date.now() + 3600000); // 1 heure
+
+    await user.update({
+      resetPasswordToken: token,
+      resetPasswordExpires: expiration,
+    });
+
+    // Simulation de l'envoi par e-mail
+    console.log(
+      `🔗 Lien de réinitialisation : http://localhost:3005/reset-password/${token}`
+    );
+
+    res
+      .status(200)
+      .json({ message: "Email de réinitialisation envoyé (simulé)." });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.resetPassword = async (req, res, next) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    const user = await User.findOne({
+      where: {
+        resetPasswordToken: token,
+        resetPasswordExpires: { [db.Sequelize.Op.gt]: new Date() },
+      },
+    });
+
+    if (!user)
+      return res.status(400).json({ message: "Token invalide ou expiré" });
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await user.update({
+      motDePasse: hashedPassword,
+      resetPasswordToken: null,
+      resetPasswordExpires: null,
+    });
+
+    res.status(200).json({ message: "Mot de passe réinitialisé avec succès." });
+  } catch (err) {
+    next(err);
+  }
+};

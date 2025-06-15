@@ -23,8 +23,7 @@ require("./routes/user.routes")(app);
 require("./routes/role.routes")(app);
 require("./routes/admin.routes")(app);
 
-// Middleware global de gestion des erreurs
-app.use(errorHandler);
+app.use(errorHandler); // À la fin, pour capturer les erreurs
 
 // Synchronisation BDD + Initialisation
 const PORT = process.env.PORT || 8080;

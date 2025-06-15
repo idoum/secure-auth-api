@@ -17,7 +17,7 @@ exports.getProfile = async (req, res) => {
 
     res.status(200).send(user);
   } catch (err) {
-    res.status(500).send({ message: err.message });
+    next(err); // passe l'erreur au middleware
   }
 };
 
@@ -27,10 +27,14 @@ exports.updatePassword = async (req, res) => {
 
     const user = await User.findByPk(req.userId);
 
-    if (!user) return res.status(404).send({ message: "Utilisateur non trouvé." });
+    if (!user)
+      return res.status(404).send({ message: "Utilisateur non trouvé." });
 
     const match = await bcrypt.compare(oldPassword, user.password);
-    if (!match) return res.status(400).send({ message: "Ancien mot de passe incorrect." });
+    if (!match)
+      return res
+        .status(400)
+        .send({ message: "Ancien mot de passe incorrect." });
 
     const hashed = await bcrypt.hash(newPassword, 10);
     user.password = hashed;
@@ -38,7 +42,7 @@ exports.updatePassword = async (req, res) => {
 
     res.status(200).send({ message: "Mot de passe mis à jour." });
   } catch (err) {
-    res.status(500).send({ message: err.message });
+     next(err); // passe l'erreur au middleware
   }
 };
 // Lire tous les utilisateurs avec leurs rôles
@@ -57,14 +61,14 @@ exports.getAllUsers = async (req, res) => {
         [Op.or]: [
           { nom: { [Op.like]: `%${search}%` } },
           { prenom: { [Op.like]: `%${search}%` } },
-          { email: { [Op.like]: `%${search}%` } }
-        ]
+          { email: { [Op.like]: `%${search}%` } },
+        ],
       },
       include: ["roles"],
       attributes: { exclude: ["password"] },
       limit,
       offset,
-      order: [[sort, order]]
+      order: [[sort, order]],
     });
 
     const totalPages = Math.ceil(count / limit);
@@ -73,10 +77,10 @@ exports.getAllUsers = async (req, res) => {
       totalItems: count,
       totalPages,
       currentPage: page,
-      users: rows
+      users: rows,
     });
   } catch (err) {
-    res.status(500).send({ message: err.message });
+     next(err); // passe l'erreur au middleware
   }
 };
 
@@ -88,13 +92,15 @@ exports.addRoleToUser = async (req, res) => {
     const role = await Role.findByPk(roleId);
 
     if (!user || !role) {
-      return res.status(404).send({ message: "Utilisateur ou rôle non trouvé" });
+      return res
+        .status(404)
+        .send({ message: "Utilisateur ou rôle non trouvé" });
     }
 
     await user.addRole(role);
     res.status(200).send({ message: "Rôle ajouté à l'utilisateur." });
   } catch (err) {
-    res.status(500).send({ message: err.message });
+    next(err); // passe l'erreur au middleware
   }
 };
 
@@ -106,13 +112,15 @@ exports.removeRoleFromUser = async (req, res) => {
     const role = await Role.findByPk(roleId);
 
     if (!user || !role) {
-      return res.status(404).send({ message: "Utilisateur ou rôle non trouvé" });
+      return res
+        .status(404)
+        .send({ message: "Utilisateur ou rôle non trouvé" });
     }
 
     await user.removeRole(role);
     res.status(200).send({ message: "Rôle retiré de l'utilisateur." });
   } catch (err) {
-    res.status(500).send({ message: err.message });
+    next(err); // passe l'erreur au middleware
   }
 };
 
@@ -126,6 +134,6 @@ exports.deleteUser = async (req, res) => {
     }
     res.status(200).send({ message: "Utilisateur supprimé." });
   } catch (err) {
-    res.status(500).send({ message: err.message });
+    next(err); // passe l'erreur au middleware
   }
 };

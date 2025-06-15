@@ -6,6 +6,6 @@ exports.getAllRoles = async (req, res) => {
     const roles = await Role.findAll();
     res.status(200).send(roles);
   } catch (err) {
-    res.status(500).send({ message: err.message });
+    next(err); // passe l'erreur au middleware
   }
 };
