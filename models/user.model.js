@@ -37,6 +37,15 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       allowNull: true,
     },
+    resetToken: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+
+    resetTokenExpiration: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   });
 
   // Associations
