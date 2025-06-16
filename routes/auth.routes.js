@@ -1,4 +1,5 @@
 const { checkDuplicateEmail } = require("../middleware/verifySignUp");
+const { verifyToken } = require("../middleware/authJwt");
 const controller = require("../controllers/auth.controller");
 const {  forgotPasswordValidator,   resetPasswordValidator, } = require("../validators/auth.validator");
 const validateRequest = require("../middleware/validateRequest");
