@@ -10,6 +10,7 @@ module.exports = (app) => {
   router.post("/signin", controller.signin);
   router.post("/forgot-password", forgotPasswordValidator, validateRequest, controller.forgotPassword);
   router.post("/reset-password", resetPasswordValidator, validateRequest, controller.resetPassword);
+  router.post("/logout", verifyToken, controller.logout);
 
   app.use("/api/auth", router);
 };
