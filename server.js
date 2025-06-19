@@ -9,7 +9,7 @@ const init = require("./init/init");
 
 // Configuration CORS (à adapter selon domaine réel en production)
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || "http://localhost:3000",
+  origin: process.env.FRONTEND_URL || "http://localhost:5173",
 };
 
 app.use(cors(corsOptions));
