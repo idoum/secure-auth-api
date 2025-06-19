@@ -8,11 +8,24 @@ const db = require("./models");
 const init = require("./init/init");
 
 // Configuration CORS (à adapter selon domaine réel en production)
+const allowedOrigins = [
+  'https://secure.mesprojets.ovh', // prod
+  'http://localhost:5173'           // dev
+];
+
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || "http://localhost:5173",
+  origin: (origin, callback) => {
+    // origin peut être undefined pour les outils de test (Postman, curl)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`Origine CORS non autorisée: ${origin}`));
+    }
+  },
+  credentials: true, // si tu utilises des cookies httpOnly
 };
 
-//app.use(cors(corsOptions));
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(limiter);
