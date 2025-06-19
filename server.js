@@ -15,14 +15,15 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // origin peut être undefined pour les outils de test (Postman, curl)
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error(`Origine CORS non autorisée: ${origin}`));
     }
   },
-  credentials: true, // si tu utilises des cookies httpOnly
+  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization','X-Requested-With','x-access-token'],
+  credentials: true,
 };
 
 app.options('*', cors(corsOptions));
