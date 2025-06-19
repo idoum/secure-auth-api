@@ -25,6 +25,7 @@ const corsOptions = {
   credentials: true, // si tu utilises des cookies httpOnly
 };
 
+app.options('*', cors(corsOptions));
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
