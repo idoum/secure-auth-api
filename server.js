@@ -9,7 +9,6 @@ const init = require("./init/init");
 
 // Configuration CORS (à adapter selon domaine réel en production)
 const allowedOrigins = [
-  'https://secure.mesprojets.ovh', // prod
   'http://localhost:5173'           // dev
 ];
 
